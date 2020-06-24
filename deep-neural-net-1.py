@@ -22,6 +22,23 @@ def help ():
     """
     Returns some helpful information on how to use
     """
+    print('#'*5 + '-'*100 + '#'*5)
+    print('\n\n')
+    print('You will need to decide on the following hyperparameters to initialize your model - \n\n')
+    print('The architecture of your model. \n\t Decide on the number of layers your network will have, and the number of units in each of these layers. \n')
+    print('The activation functions to use in each layer. \n\t Most often you will want to use a ReLU activation for the hidden units and a sigmoid or softmax activation for the output.\n')
+    print('The learning rate alpha of your model. \n\t Use a small number like 0.01, but not too small or gradient descent won\'t converge on the global minima. If you use too big a value, gradient descent can start to diverge.\n')
+    print('The number of iterations of gradient descent you want to run. \n\t This model currently only supports gradient descent as an optimization algorithm, but I will be adding other optimizers like ADAM, RMS Prop, and Momentum soon.\n')
+    print('\n')
+    print('#'*5 + '-'*100 + '#'*5)
+    print('\n\nIf you\'re working locally, make sure you have numpy and matplotlib installed.')
+    print('\n')
+    print('To build a network, simply call the model() function and pass it the parameters it needs. Have your input data and your output labels prepared and formatted how you want before you initialize.')
+    print('Calling the model() function will begin training your given network on your given dataset for a default of 10,000 iterations\n')
+    print('It will print the cost and the training accuracy of your model after it is done training.\n\n')
+    print('#'*5 + '-'*100 + '#'*5)
+    print('\n')
+    
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
