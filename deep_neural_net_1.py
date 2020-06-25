@@ -1,13 +1,10 @@
 """
 Python script to construct a deep neural network. 
 
-Takes the architecture -
-1. Input size
-2. Number of layers
-3. Number of hidden units in each layer.
-4. Number of output layers
-5. Learning rate
-6. Activation to use in each layer
+Needs the architecture of the network, the input data set and the output labels, and a few hyperparameters for you to decide.
+
+Call the 'four_layer_logistic()' or the 'five_layer_logistic()' functions to quickly construct a four layer or a five layer neural network respectively and pass them their required parameters.
+Call the 'model()' function to construct a general deep neural network.
 
 Constructs a deep neural network, trains it on the input data set, and returns the parameters along with the error on the dataset.
 """
@@ -33,7 +30,8 @@ def help ():
     print('#'*5 + '-'*100 + '#'*5)
     print('\n\nIf you\'re working locally, make sure you have numpy and matplotlib installed.')
     print('\n')
-    print('To build a network, simply call the model() function and pass it the parameters it needs. Have your input data and your output labels prepared and formatted how you want before you initialize.')
+    print('To build a pre-implemented logistic or softmax network, call the \'four_layer_logistic()\' or \'five_layer_logistic()\' functions and pass them the parameters they need.\n\n')
+    print('To build a general network, simply call the model() function and pass it the parameters it needs. Have your input data and your output labels prepared and formatted how you want before you initialize.')
     print('Calling the model() function will begin training your given network on your given dataset for a default of 10,000 iterations\n')
     print('It will print the cost and the training accuracy of your model after it is done training.\n\n')
     print('#'*5 + '-'*100 + '#'*5)
@@ -214,13 +212,18 @@ def calculate_accuracy (X, Y, parameters, number_of_layers, activation_functions
     m = Y.shape[1]
     correct_count = 0
 
+    # for i in range(m):
+    #     X_in = X[:, i]
+    #     Y_out = Y[:, i]
+
+    #     pred = forward_propagation(X_in, parameters, number_of_layers, activation_functions)
+
+    #     if pred == Y_out:
+    #         correct_count += 1
+
+    pred,_ = forward_propagation(X, parameters, number_of_layers, activation_functions)
     for i in range(m):
-        X_in = X[:, i]
-        Y_out = Y[:, i]
-
-        pred = forward_propagation(X_in, parameters, number_of_layers, activation_functions)
-
-        if pred == Y_out:
+        if pred[:, i] == Y[:, i]:
             correct_count += 1
     
     accuracy = correct_count*100/m
@@ -253,13 +256,44 @@ def model (X, Y, architecture, activation_functions, learning_rate = 0.001, prin
             print(f'Cost after iteration {i} = {cost}')
 
     plt.plot(costs)
-    plt.xlabel('Iterations (in hundereds')
+    plt.xlabel('Iterations (in hundereds)')
     plt.ylabel('Cost')
     plt.title(f'Learning rate = {learning_rate}')
     plt.show()
 
     print(f'Ran {number_of_iterations} iterations. Returning parameters now.')
     print(f'The final cost of the model was: {costs[-1]}')
-    print(f'Training accuracy was: {calculate_accuracy(X, Y, parameters, number_of_layers, activation_functions)}')
+    print(f'The training accuracy was: {calculate_accuracy(X, Y, parameters, number_of_layers, activation_functions)}')
 
     return parameters
+
+#-----------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------------------#
+
+def four_layer_logistic (X, Y, architecture =  [10, 5, 5, 1], activation_functions = ['relu', 'relu', 'relu', 'relu', 'sigmoid'], learning_rate = 0.001, print_cost = True, number_of_iterations = 10000):
+    """
+    Predefined function to construct a four layer (logistic) plain neural network. 
+    If you want to override the architecture to construct a four layer softmax network, you can overwrite the values of the default parameters 'architecture' and 'activation_functions'.
+
+    Takes in only the input X and the output labels Y.
+    """
+    temp = X.shape[0]
+    architecture.insert(0, temp)
+    model(X, Y, architecture, activation_functions, learning_rate, print_cost, number_of_iterations)
+
+#-----------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------------------#
+
+def five_layer_logistic (X, Y, architecture = [20, 10, 5, 5, 1], activation_functions = ['relu', 'relu', 'relu', 'relu', 'relu', 'sigmoid'], learning_rate = 0.001, print_cost = True, number_of_iterations = 10000):
+    """
+    Predifined function to construct a five layer logistic plain neural network.
+    If you want to override the architecture to construct a five layer softmax network, you can overwrite the values of the default parameters 'architecture' and 'activation_functions'.
+
+    Takes in only the input X and the output labels Y.
+    """
+    temp = X.shape[0]
+    architecture.insert(0, temp)
+    model(X, Y, architecture, activation_functions, learning_rate, print_cost, number_of_iterations)
+
+#-----------------------------------------------------------------------------------------------------------------------#
+#-----------------------------------------------------------------------------------------------------------------------#
