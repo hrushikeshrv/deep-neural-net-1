@@ -5,5 +5,5 @@ Mostly written for my own use, but you're welcome to use it if you find it helpf
 
 # USAGE
 
-	import deep-neural-net-1 as dnn1
+	import deep_neural_net_1 as dnn1
 	dnn1.help()
