@@ -1,1 +1,7 @@
+This section contains the parameters I got when I trained a four layer and a five layer network on a small training set of 1000 examples of fake news headlines vs.
+real news headlines along with the ipython notebook containing the code.
 
+learning_set.csv is the training set
+learning_labels.csv is the corresponding label set for the training set.
+
+Both models were trained for 1000 iterations.
