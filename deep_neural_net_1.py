@@ -8,9 +8,11 @@ Call the 'model()' function to construct a general deep neural network.
 
 Constructs a deep neural network, trains it on the input data set, and returns the parameters along with the error on the dataset.
 """
-
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
+import time
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
@@ -52,11 +54,17 @@ def relu (Z):
     """
     Takes in a real number or matrix Z and applies the (leaky) relu function to it.
     """
-    A = max(0.01*Z, Z)
+    A = np.zeros(Z.shape)
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            if Z[i,j] >= 0:
+                A[i,j] = Z[i,j]
+            else:
+                A[i,j] = 0.001*Z[i,j]
     return A
 
 #NOTE TO SELF ---- THIS DEFINITION MIGHT CAUSE BROADCASTING PROBLEMS DURING RUNTIME
-#NOTE 2.0 --- Probably fixed it.
+#NOTE 2.0 --- fixed it.
 def drelu (Z):
     """
     Takes in a real number Z and returns the derivative of the relu function at that value or matrix.
@@ -77,7 +85,8 @@ def softmax (Z):
     """
     temp = np.exp(Z)
     factor = np.sum(temp)
-    return temp/factor
+    A = temp/factor
+    return A
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
@@ -120,11 +129,11 @@ def forward_propagation (X, parameters, num_layers, activation_func = []):
     """
     activations = {'A0': X}
 
-    for i in range(len(1, num_layers+1)):
+    for i in range(1, num_layers+1):
         W = parameters['W' + str(i)]
         b = parameters['b' + str(i)]
 
-        activations['Z' + str(i)] = np.dot(W, activations['Z' + str(i-1)]) + b
+        activations['Z' + str(i)] = np.dot(W, activations['A' + str(i-1)]) + b
         
         if activation_func[i-1].lower() == 'relu':
             activations['A' + str(i)] = relu(activations['Z' + str(i)])
@@ -134,8 +143,12 @@ def forward_propagation (X, parameters, num_layers, activation_func = []):
 
         elif activation_func[i-1].lower() == 'sigmoid':
             activations['A' + str(i)] = sigmoid(activations['Z' + str(i)])
+        
+        activations['W' + str(i)] = W
+        activations['b' + str(i)] = b
 
     return activations['A' + str(num_layers)], activations
+
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
@@ -153,10 +166,10 @@ def calculate_cost (Y, prediction, activation_output = 'sigmoid'):
     m = Y.shape[1]
 
     if activation_output.lower() == 'sigmoid':
-        cost = (1/m)*np.sum(Y*np.log(prediction) + (1-Y)*np.log(1-prediction))
+        cost = (-1/m)*np.sum(Y*np.log(prediction) + (1-Y)*np.log(1-prediction))
 
     if activation_output.lower() == 'softmax':
-        cost = (1/m)*np.sum(np.sum(Y*np.log(prediction), axis = 0, keepdims = True))
+        cost = (-1/m)*np.sum(np.sum(Y*np.log(prediction), axis = 0, keepdims = True))
 
     return cost
 
@@ -176,10 +189,13 @@ def backward_propagation (X, Y, cache, number_of_layers):
     last_layer = 'dZ' + str(number_of_layers)
     gradients = {last_layer: cache['A'+str(number_of_layers)]-Y}
 
-    for i in reversed(range(1,number_of_layers)):
+    for i in reversed(range(2,number_of_layers+1)):
         gradients['dW' + str(i)] = (1/m)*np.dot(gradients['dZ'+str(i)], cache['A' + str(i-1)].T)
         gradients['db' + str(i)] = (1/m)*np.sum(gradients['dZ'+str(i)], axis = 1, keepdims = True)
         gradients['dZ' + str(i-1)] = np.dot(cache['W' + str(i)].T, gradients['dZ' + str(i)])*drelu(cache['Z' + str(i-1)])
+    
+    gradients['dW1'] = (1/m)*np.dot(gradients['dZ'+str(1)], cache['A' + str(0)].T)
+    gradients['db1'] = (1/m)*np.sum(gradients['dZ'+str(1)], axis = 1, keepdims = True)
     
     return gradients
 
@@ -212,18 +228,9 @@ def calculate_accuracy (X, Y, parameters, number_of_layers, activation_functions
     m = Y.shape[1]
     correct_count = 0
 
-    # for i in range(m):
-    #     X_in = X[:, i]
-    #     Y_out = Y[:, i]
-
-    #     pred = forward_propagation(X_in, parameters, number_of_layers, activation_functions)
-
-    #     if pred == Y_out:
-    #         correct_count += 1
-
     pred,_ = forward_propagation(X, parameters, number_of_layers, activation_functions)
-    for i in range(m):
-        if pred[:, i] == Y[:, i]:
+    for i in range(m):       
+        if (pred[:, i] >= 0.5 and Y[:, i] == 1) or (pred[:,i] < 0.5 and Y[:,i] == 0):
             correct_count += 1
     
     accuracy = correct_count*100/m
@@ -234,7 +241,7 @@ def calculate_accuracy (X, Y, parameters, number_of_layers, activation_functions
 
 def model (X, Y, architecture, activation_functions, learning_rate = 0.001, print_cost = True, number_of_iterations = 10000):
     """
-    Takes in the training set, the labels, and all the required parameters and trains the defined model for the given number of iterations.
+    Takes in the training set X, the labels Y, and all the required parameters and trains the defined model for the given number of iterations.
     Prints the cost if print_cost is true.
     """
     costs = []
@@ -253,6 +260,7 @@ def model (X, Y, architecture, activation_functions, learning_rate = 0.001, prin
         parameters = update_parameters(parameters, number_of_layers, gradients, alpha=0.01)
 
         if print_cost and i%100 == 0:
+            print(f'Completed {i} iterarions.\n')
             print(f'Cost after iteration {i} = {cost}')
 
     plt.plot(costs)
@@ -260,10 +268,17 @@ def model (X, Y, architecture, activation_functions, learning_rate = 0.001, prin
     plt.ylabel('Cost')
     plt.title(f'Learning rate = {learning_rate}')
     plt.show()
+    
+    costs_df = pd.DataFrame(costs)
+    sns.set(style = 'whitegrid')
+    # sns.set_context(context = 'talk')
+    plt.figure(figsize = (10,5))
+    sns.lineplot(data = costs_df, palette = 'magma', linewidth = 3)
 
     print(f'Ran {number_of_iterations} iterations. Returning parameters now.')
-    print(f'The final cost of the model was: {costs[-1]}')
-    print(f'The training accuracy was: {calculate_accuracy(X, Y, parameters, number_of_layers, activation_functions)}')
+    print(f'The final cost of the model was: {costs[-1]}%')
+    acc = calculate_accuracy(X, Y, parameters, number_of_layers, activation_functions)
+    print(f'The training accuracy was: {acc}')
 
     return parameters
 
@@ -279,7 +294,11 @@ def four_layer_logistic (X, Y, architecture =  [10, 5, 5, 1], activation_functio
     """
     temp = X.shape[0]
     architecture.insert(0, temp)
+    tic = time.time()
     model(X, Y, architecture, activation_functions, learning_rate, print_cost, number_of_iterations)
+    toc = time.time()
+    
+    print(f'Took {toc-tic} seconds to train.')
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
@@ -293,7 +312,11 @@ def five_layer_logistic (X, Y, architecture = [20, 10, 5, 5, 1], activation_func
     """
     temp = X.shape[0]
     architecture.insert(0, temp)
+    tic = time.time()
     model(X, Y, architecture, activation_functions, learning_rate, print_cost, number_of_iterations)
+    toc = time.time()
+    
+    print(f'Took {toc - tic} seconds to train.')
 
 #-----------------------------------------------------------------------------------------------------------------------#
 #-----------------------------------------------------------------------------------------------------------------------#
